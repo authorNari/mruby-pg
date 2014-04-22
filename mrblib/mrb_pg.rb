@@ -34,5 +34,49 @@ module PG
 
       return connopts.join(' ')
     end
+
+    # call-seq:
+    #    conn.transaction { |conn| ... } -> result of the block
+    # 
+    # Executes a +BEGIN+ at the start of the block,
+    # and a +COMMIT+ at the end of the block, or
+    # +ROLLBACK+ if any exception occurs.
+    def transaction(&block)
+      res = exec("BEGIN")
+      res.check
+      block_result = nil
+      begin
+        block_result = block.call
+      rescue Exception
+        res = exec("ROLLBACK")
+        res.check
+        return
+      end
+      res = exec("COMMIT")
+      res.check
+      return block_result
+    end
+  end
+
+  class Result
+    def each(&block)
+      return to_enum :each unless block_given?
+
+      begin
+        idx, length = -1, self.length-1
+        while idx < length and length <= self.length and length = self.length-1
+          elm = self[idx += 1]
+          unless elm
+            if elm == nil and length >= self.length
+              break
+            end
+          end
+          block.call(elm)
+        end
+        self
+      ensure
+        clear
+      end
+    end
   end
 end
