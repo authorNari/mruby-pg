@@ -31,24 +31,24 @@
 static PGconn *
 pgconn_check(mrb_state *mrb, mrb_value self) {
   if (!mrb_obj_is_kind_of(mrb, self, mrb_cPGconn(mrb))) {
-		mrb_raisef(mrb, E_TYPE_ERROR,
+    mrb_raisef(mrb, E_TYPE_ERROR,
                "wrong argument type %s (expected PG::Connection)",
                mrb_obj_classname(mrb, self));
   }
 
-	return DATA_PTR(self);
+  return DATA_PTR(self);
 }
 
 PGconn *
 pg_get_pgconn(mrb_state *mrb, mrb_value self)
 {
-	PGconn *conn = pgconn_check(mrb, self);
+  PGconn *conn = pgconn_check(mrb, self);
 
-	if (!conn) {
-		mrb_raise(mrb, mrb_ePGerror(mrb), "connection is closed");
+  if (!conn) {
+    mrb_raise(mrb, mrb_ePGerror(mrb), "connection is closed");
   }
 
-	return conn;
+  return conn;
 }
 
 
@@ -62,8 +62,8 @@ pg_get_pgconn(mrb_state *mrb, mrb_value self)
 static void
 pgresult_gc_free(mrb_state *mrb, void *result)
 {
-	if(result != NULL) {
-		PQclear((PGresult *)result);
+  if(result != NULL) {
+    PQclear((PGresult *)result);
   }
 }
 
@@ -77,13 +77,13 @@ const struct mrb_data_type mrb_pgresult_type = {
 static PGresult*
 pgresult_get(mrb_state *mrb, mrb_value self)
 {
-	PGresult *result;
+  PGresult *result;
 
-	Data_Get_Struct(mrb, self, &mrb_pgresult_type, result);
-	if (result == NULL) {
+  Data_Get_Struct(mrb, self, &mrb_pgresult_type, result);
+  if (result == NULL) {
     mrb_raise(mrb, mrb_ePGerror(mrb), "result has been cleared");
   }
-	return result;
+  return result;
 }
 
 
@@ -93,12 +93,12 @@ pgresult_get(mrb_state *mrb, mrb_value self)
 mrb_value
 pg_new_result(mrb_state *mrb, PGresult *result, mrb_value mrb_pgconn)
 {
-	mrb_value val;
+  mrb_value val;
   
   val = mrb_obj_value(Data_Wrap_Struct(mrb, mrb_cPGresult(mrb), &mrb_pgresult_type, result));
-	mrb_iv_set(mrb, val, mrb_intern_lit(mrb, "@connection"), mrb_pgconn);
+  mrb_iv_set(mrb, val, mrb_intern_lit(mrb, "@connection"), mrb_pgconn);
 
-	return val;
+  return val;
 }
 
 static mrb_value
@@ -126,31 +126,31 @@ pgresult_value(mrb_state *mrb, mrb_value self, PGresult *result, int tuple_num, 
 static mrb_value
 pgresult_aref(mrb_state *mrb, mrb_value self)
 {
-	PGresult *result = pgresult_get(mrb, self);
-	int field_num;
-	mrb_value fname;
-	mrb_value tuple;
+  PGresult *result = pgresult_get(mrb, self);
+  int field_num;
+  mrb_value fname;
+  mrb_value tuple;
   mrb_value index;
-	int tuple_num;
+  int tuple_num;
 
   mrb_get_args(mrb, "i", &index);
   tuple_num = mrb_fixnum(index);
 
-	if (tuple_num < 0 || tuple_num >= PQntuples(result)) {
-		mrb_raisef(mrb, E_ARGUMENT_ERROR, "Index %d is out of range", tuple_num);
+  if (tuple_num < 0 || tuple_num >= PQntuples(result)) {
+    mrb_raisef(mrb, E_ARGUMENT_ERROR, "Index %d is out of range", tuple_num);
   }
 
-	tuple = mrb_hash_new(mrb);
-	for (field_num = 0; field_num < PQnfields(result); field_num++) {
-		fname = mrb_str_new_cstr(mrb, PQfname(result,field_num));
-		mrb_hash_set(mrb, tuple, fname, pgresult_value(mrb, self, result, tuple_num, field_num));
-	}
-	return tuple;
+  tuple = mrb_hash_new(mrb);
+  for (field_num = 0; field_num < PQnfields(result); field_num++) {
+    fname = mrb_str_new_cstr(mrb, PQfname(result,field_num));
+    mrb_hash_set(mrb, tuple, fname, pgresult_value(mrb, self, result, tuple_num, field_num));
+  }
+  return tuple;
 }
 
 /*
  * call-seq:
- *    res.size	-> Integer
+ *    res.size  -> Integer
  *
  * Record size.
  */
@@ -170,47 +170,47 @@ pgresult_size(mrb_state *mrb, mrb_value self)
 mrb_value
 pgresult_check(mrb_state *mrb, mrb_value self)
 {
-	mrb_value error;
-	PGresult *result;
-	mrb_value mrb_pgconn = mrb_iv_get(mrb, self, mrb_intern_lit(mrb, "@connection"));
-	PGconn *conn = pg_get_pgconn(mrb, mrb_pgconn);
+  mrb_value error;
+  PGresult *result;
+  mrb_value mrb_pgconn = mrb_iv_get(mrb, self, mrb_intern_lit(mrb, "@connection"));
+  PGconn *conn = pg_get_pgconn(mrb, mrb_pgconn);
 
-	Data_Get_Struct(mrb, self, &mrb_pgresult_type, result);
+  Data_Get_Struct(mrb, self, &mrb_pgresult_type, result);
 
-	if (result == NULL)
-	{
-		error = mrb_str_new_cstr(mrb, PQerrorMessage(conn));
-	}
-	else
-	{
-		switch (PQresultStatus(result))
-		{
-		case PGRES_TUPLES_OK:
-		case PGRES_COPY_OUT:
-		case PGRES_COPY_IN:
+  if (result == NULL)
+  {
+    error = mrb_str_new_cstr(mrb, PQerrorMessage(conn));
+  }
+  else
+  {
+    switch (PQresultStatus(result))
+    {
+    case PGRES_TUPLES_OK:
+    case PGRES_COPY_OUT:
+    case PGRES_COPY_IN:
 #ifdef HAVE_CONST_PGRES_COPY_BOTH
-		case PGRES_COPY_BOTH:
+    case PGRES_COPY_BOTH:
 #endif
 #ifdef HAVE_CONST_PGRES_SINGLE_TUPLE
-		case PGRES_SINGLE_TUPLE:
+    case PGRES_SINGLE_TUPLE:
 #endif
-		case PGRES_EMPTY_QUERY:
-		case PGRES_COMMAND_OK:
-			return self;
-		case PGRES_BAD_RESPONSE:
-		case PGRES_FATAL_ERROR:
-		case PGRES_NONFATAL_ERROR:
-			error = mrb_str_new_cstr(mrb, PQresultErrorMessage(result));
-			break;
-		default:
-			error = mrb_str_new_cstr(mrb, "internal error : unknown result status.");
-		}
-	}
+    case PGRES_EMPTY_QUERY:
+    case PGRES_COMMAND_OK:
+      return self;
+    case PGRES_BAD_RESPONSE:
+    case PGRES_FATAL_ERROR:
+    case PGRES_NONFATAL_ERROR:
+      error = mrb_str_new_cstr(mrb, PQresultErrorMessage(result));
+      break;
+    default:
+      error = mrb_str_new_cstr(mrb, "internal error : unknown result status.");
+    }
+  }
 
   mrb_raise(mrb, mrb_ePGerror(mrb), RSTRING_PTR(error));
 
-	/* Not reached */
-	return self;
+  /* Not reached */
+  return self;
 }
 
 /*
@@ -222,9 +222,9 @@ pgresult_check(mrb_state *mrb, mrb_value self)
 static mrb_value
 pgresult_clear(mrb_state *mrb, mrb_value self)
 {
-	PQclear(pgresult_get(mrb, self));
-	DATA_PTR(self) = NULL;
-	return mrb_nil_value();
+  PQclear(pgresult_get(mrb, self));
+  DATA_PTR(self) = NULL;
+  return mrb_nil_value();
 }
 
 
@@ -288,16 +288,16 @@ pgconn_init(mrb_state *mrb, mrb_value self)
 static mrb_value
 pgconn_get_result(mrb_state *mrb, mrb_value self)
 {
-	PGconn *conn = pg_get_pgconn(mrb, self);
-	PGresult *result;
-	mrb_value mrb_pgresult;
+  PGconn *conn = pg_get_pgconn(mrb, self);
+  PGresult *result;
+  mrb_value mrb_pgresult;
 
-	result = PQgetResult(conn);
-	if(result == NULL) {
-		return mrb_nil_value();
+  result = PQgetResult(conn);
+  if(result == NULL) {
+    return mrb_nil_value();
   }
-	mrb_pgresult = pg_new_result(mrb, result, self);
-	return mrb_pgresult;
+  mrb_pgresult = pg_new_result(mrb, result, self);
+  return mrb_pgresult;
 }
 
 /*
@@ -340,113 +340,113 @@ pgconn_get_result(mrb_state *mrb, mrb_value self)
 static mrb_value
 pgconn_exec_params(mrb_state *mrb, mrb_value self)
 {
-	PGconn *conn = pg_get_pgconn(mrb, self);
-	PGresult *result = NULL;
-	mrb_value mrb_pgresult;
-	mrb_value command, params, in_res_fmt, block;
-	mrb_value param, param_type, param_value, param_format;
-	mrb_value param_value_tmp;
-	mrb_sym sym_type, sym_value, sym_format;
-	mrb_value gc_array;
-	int i=0;
-	int nParams, argc;
-	Oid *paramTypes;
-	char ** paramValues;
-	int *paramLengths;
-	int *paramFormats;
-	int resultFormat;
+  PGconn *conn = pg_get_pgconn(mrb, self);
+  PGresult *result = NULL;
+  mrb_value mrb_pgresult;
+  mrb_value command, params, in_res_fmt, block;
+  mrb_value param, param_type, param_value, param_format;
+  mrb_value param_value_tmp;
+  mrb_sym sym_type, sym_value, sym_format;
+  mrb_value gc_array;
+  int i=0;
+  int nParams, argc;
+  Oid *paramTypes;
+  char ** paramValues;
+  int *paramLengths;
+  int *paramFormats;
+  int resultFormat;
 
-	argc = mrb_get_args(mrb, "SA|i&", &command, &params, &in_res_fmt, &block);
+  argc = mrb_get_args(mrb, "SA|i&", &command, &params, &in_res_fmt, &block);
 
-	/*
-	 * Handle the edge-case where the caller is coming from #exec, but passed an explict +nil+
-	 * for the second parameter.
-	 */
-	mrb_check_type(mrb, params, MRB_TT_ARRAY);
+  /*
+   * Handle the edge-case where the caller is coming from #exec, but passed an explict +nil+
+   * for the second parameter.
+   */
+  mrb_check_type(mrb, params, MRB_TT_ARRAY);
 
-	if (argc < 3) {
-		resultFormat = 0;
-	}
-	else {
-		resultFormat = mrb_fixnum(in_res_fmt);
-	}
+  if (argc < 3) {
+    resultFormat = 0;
+  }
+  else {
+    resultFormat = mrb_fixnum(in_res_fmt);
+  }
 
-	gc_array = mrb_ary_new(mrb);
+  gc_array = mrb_ary_new(mrb);
   mrb_iv_set(mrb, self, mrb_intern_lit(mrb, "@__tmp_gc_array"), gc_array);
 
-	sym_type = mrb_intern_cstr(mrb, "type");
-	sym_value = mrb_intern_cstr(mrb, "value");
-	sym_format = mrb_intern_cstr(mrb, "format");
-	nParams = (int)RARRAY_LEN(params);
-	paramTypes =  mrb_malloc(mrb, (sizeof(Oid) * nParams));
-	paramValues = mrb_malloc(mrb, (sizeof(char *) * nParams));
-	paramLengths = mrb_malloc(mrb, (sizeof(int) * nParams));
+  sym_type = mrb_intern_cstr(mrb, "type");
+  sym_value = mrb_intern_cstr(mrb, "value");
+  sym_format = mrb_intern_cstr(mrb, "format");
+  nParams = (int)RARRAY_LEN(params);
+  paramTypes =  mrb_malloc(mrb, (sizeof(Oid) * nParams));
+  paramValues = mrb_malloc(mrb, (sizeof(char *) * nParams));
+  paramLengths = mrb_malloc(mrb, (sizeof(int) * nParams));
   paramFormats = mrb_malloc(mrb, (sizeof(int) * nParams));
 
-	for ( i = 0; i < nParams; i++ ) {
-		param = mrb_ary_entry(params, i);
+  for ( i = 0; i < nParams; i++ ) {
+    param = mrb_ary_entry(params, i);
     if (mrb_hash_p(param)) {
-			param_type = mrb_hash_get(mrb, param, mrb_symbol_value(sym_type));
-			param_value_tmp = mrb_hash_get(mrb, param, mrb_symbol_value(sym_value));
-			if (mrb_nil_p(param_value_tmp)) {
-				param_value = param_value_tmp;
+      param_type = mrb_hash_get(mrb, param, mrb_symbol_value(sym_type));
+      param_value_tmp = mrb_hash_get(mrb, param, mrb_symbol_value(sym_value));
+      if (mrb_nil_p(param_value_tmp)) {
+        param_value = param_value_tmp;
       }
-			else {
-				param_value = mrb_obj_as_string(mrb, param_value_tmp);
+      else {
+        param_value = mrb_obj_as_string(mrb, param_value_tmp);
       }
-			param_format = mrb_hash_get(mrb, param, mrb_symbol_value(sym_format));
-		}
-		else {
-			param_type = mrb_nil_value();
-			if (mrb_nil_p(param)) {
-				param_value = param;
-      }
-			else {
-				param_value = mrb_obj_as_string(mrb, param);
-      }
-			param_format = mrb_nil_value();
-		}
-
-		if (mrb_nil_p(param_type)) {
-			paramTypes[i] = 0;
+      param_format = mrb_hash_get(mrb, param, mrb_symbol_value(sym_format));
     }
-		else {
-			paramTypes[i] = mrb_fixnum(param_type);
+    else {
+      param_type = mrb_nil_value();
+      if (mrb_nil_p(param)) {
+        param_value = param;
+      }
+      else {
+        param_value = mrb_obj_as_string(mrb, param);
+      }
+      param_format = mrb_nil_value();
     }
 
-		if(mrb_nil_p(param_value)) {
-			paramValues[i] = NULL;
-			paramLengths[i] = 0;
-		}
-		else {
-			mrb_check_type(mrb, param_value, MRB_TT_STRING);
-			/* make sure param_value doesn't get freed by the GC */
-			mrb_ary_push(mrb, gc_array, param_value);
-			paramValues[i] = RSTRING_PTR(param_value);
-			paramLengths[i] = (int)RSTRING_LEN(param_value);
-		}
-
-		if (mrb_nil_p(param_format)) {
-			paramFormats[i] = 0;
+    if (mrb_nil_p(param_type)) {
+      paramTypes[i] = 0;
     }
-		else {
-			paramFormats[i] = mrb_fixnum(param_format);
+    else {
+      paramTypes[i] = mrb_fixnum(param_type);
     }
-	}
 
-	result = PQexecParams(conn, RSTRING_PTR(command), nParams, paramTypes,
-		(const char * const *)paramValues, paramLengths, paramFormats, resultFormat);
+    if(mrb_nil_p(param_value)) {
+      paramValues[i] = NULL;
+      paramLengths[i] = 0;
+    }
+    else {
+      mrb_check_type(mrb, param_value, MRB_TT_STRING);
+      /* make sure param_value doesn't get freed by the GC */
+      mrb_ary_push(mrb, gc_array, param_value);
+      paramValues[i] = RSTRING_PTR(param_value);
+      paramLengths[i] = (int)RSTRING_LEN(param_value);
+    }
 
-	mrb_free(mrb, paramTypes);
-	mrb_free(mrb, paramValues);
-	mrb_free(mrb, paramLengths);
-	mrb_free(mrb, paramFormats);
+    if (mrb_nil_p(param_format)) {
+      paramFormats[i] = 0;
+    }
+    else {
+      paramFormats[i] = mrb_fixnum(param_format);
+    }
+  }
+
+  result = PQexecParams(conn, RSTRING_PTR(command), nParams, paramTypes,
+    (const char * const *)paramValues, paramLengths, paramFormats, resultFormat);
+
+  mrb_free(mrb, paramTypes);
+  mrb_free(mrb, paramValues);
+  mrb_free(mrb, paramLengths);
+  mrb_free(mrb, paramFormats);
   mrb_iv_set(mrb, self, mrb_intern_lit(mrb, "@__tmp_gc_array"), mrb_nil_value());
 
-	mrb_pgresult = pg_new_result(mrb, result, self);
-	pgresult_check(mrb, mrb_pgresult);
+  mrb_pgresult = pg_new_result(mrb, result, self);
+  pgresult_check(mrb, mrb_pgresult);
 
-	if (argc == 4) {
+  if (argc == 4) {
     return mrb_funcall_argv(mrb,
                             mrb_pgresult,
                             mrb_intern_lit(mrb, "each"),
@@ -521,23 +521,23 @@ mrb_mruby_pg_gem_init(mrb_state* mrb) {
   mrb_define_method(mrb, _cPGconn, "open", pgconn_init, MRB_ARGS_OPT(1));
   mrb_define_method(mrb, _cPGconn, "setdb", pgconn_init, MRB_ARGS_OPT(1));
   mrb_define_method(mrb, _cPGconn, "setdblogin", pgconn_init, MRB_ARGS_OPT(1));
-	mrb_define_method(mrb, _cPGconn, "exec", pgconn_exec, MRB_ARGS_REQ(1));
-	mrb_define_method(mrb, _cPGconn, "exec_params", pgconn_exec_params, MRB_ARGS_REQ(2));
-	mrb_define_method(mrb, _cPGconn, "get_result", pgconn_get_result, MRB_ARGS_NONE());
+  mrb_define_method(mrb, _cPGconn, "exec", pgconn_exec, MRB_ARGS_REQ(1));
+  mrb_define_method(mrb, _cPGconn, "exec_params", pgconn_exec_params, MRB_ARGS_REQ(2));
+  mrb_define_method(mrb, _cPGconn, "get_result", pgconn_get_result, MRB_ARGS_NONE());
   
 
   mrb_define_class_under(mrb, _mPG, "Error", mrb->eStandardError_class);
 
-	_cPGresult = mrb_define_class_under(mrb, _mPG, "Result", mrb->object_class);
+  _cPGresult = mrb_define_class_under(mrb, _mPG, "Result", mrb->object_class);
   MRB_SET_INSTANCE_TT(_cPGresult, MRB_TT_DATA);
-	mrb_include_module(mrb, _cPGresult, mrb_module_get(mrb, "Enumerable"));
+  mrb_include_module(mrb, _cPGresult, mrb_module_get(mrb, "Enumerable"));
 
-	/******     PG::Result INSTANCE METHODS: other     ******/
-	mrb_define_method(mrb, _cPGresult, "[]", pgresult_aref, MRB_ARGS_REQ(1));
-	mrb_define_method(mrb, _cPGresult, "size", pgresult_size, MRB_ARGS_NONE());
-	mrb_define_method(mrb, _cPGresult, "length", pgresult_size, MRB_ARGS_NONE());
-	mrb_define_method(mrb, _cPGresult, "check", pgresult_check, MRB_ARGS_NONE());
-	mrb_define_method(mrb, _cPGresult, "clear", pgresult_clear, MRB_ARGS_NONE());
+  /******     PG::Result INSTANCE METHODS: other     ******/
+  mrb_define_method(mrb, _cPGresult, "[]", pgresult_aref, MRB_ARGS_REQ(1));
+  mrb_define_method(mrb, _cPGresult, "size", pgresult_size, MRB_ARGS_NONE());
+  mrb_define_method(mrb, _cPGresult, "length", pgresult_size, MRB_ARGS_NONE());
+  mrb_define_method(mrb, _cPGresult, "check", pgresult_check, MRB_ARGS_NONE());
+  mrb_define_method(mrb, _cPGresult, "clear", pgresult_clear, MRB_ARGS_NONE());
 }
 
 void
