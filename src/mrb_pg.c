@@ -446,12 +446,8 @@ pgconn_exec_params(mrb_state *mrb, mrb_value self)
   mrb_pgresult = pg_new_result(mrb, result, self);
   pgresult_check(mrb, mrb_pgresult);
 
-  if (argc == 4) {
-    return mrb_funcall_argv(mrb,
-                            mrb_pgresult,
-                            mrb_intern_lit(mrb, "each"),
-                            1, &block);
-  }
+  if(!mrb_nil_p(block))
+    return mrb_funcall_with_block(mrb,mrb_pgresult,mrb_intern_lit(mrb, "each"),0,NULL,block);
 
   return mrb_pgresult;
 }
@@ -474,32 +470,25 @@ pgconn_exec(mrb_state *mrb, mrb_value self)
 {
   PGconn *conn = pg_get_pgconn(mrb, self);
   PGresult *result = NULL;
-  mrb_value *argv;
+  mrb_value *argv,b;
   mrb_value mrb_pgresult;
   int argc;
 
-  mrb_get_args(mrb, "*", &argv, &argc);
+  mrb_get_args(mrb, "*&", &argv, &argc, &b);
 
-  if (argc >= 2) {
-    if (mrb_type(argv[1]) == MRB_TT_PROC) {
-      goto without_param;
-    }
-    return mrb_funcall_argv(mrb,
-                            self,
-                            mrb_intern_lit(mrb, "exec_params"),
-                            argc, argv);
+  if(argc>1)
+  {
+    if(mrb_nil_p(b))
+      return mrb_funcall_argv(mrb,self,mrb_intern_lit(mrb, "exec_params"),argc,argv);
+    return mrb_funcall_with_block(mrb,self,mrb_intern_lit(mrb, "exec_params"),argc,argv,b);       
   }
 
- without_param:
   result = PQexec(conn, RSTRING_PTR(argv[0]));
   mrb_pgresult = pg_new_result(mrb, result, self);
   pgresult_check(mrb, mrb_pgresult);
-  if (argc == 2) {
-    return mrb_funcall(mrb,
-                       mrb_pgresult,
-                       mrb_intern_lit(mrb, "each"),
-                       1, argv[1]);
-  }
+
+  if(!mrb_nil_p(b))
+    return mrb_funcall_with_block(mrb,mrb_pgresult,mrb_intern_lit(mrb, "each"),0,NULL,b);
   
   return mrb_pgresult;
 }
